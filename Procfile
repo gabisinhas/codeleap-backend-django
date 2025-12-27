@@ -1,0 +1,1 @@
+web: gunicorn codeleap_backend_django.wsgi
