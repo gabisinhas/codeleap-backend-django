@@ -188,7 +188,13 @@ MIDDLEWARE = [
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+def _clean_origin(origin):
+    # Remove any path from the origin, keep only scheme and domain
+    from urllib.parse import urlparse
+    parsed = urlparse(origin)
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+CORS_ALLOWED_ORIGINS = [_clean_origin(o) for o in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -203,7 +209,7 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # CSRF Configuration
-CSRF_TRUSTED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = not DEBUG  # True em produção, False em desenvolvimento    

@@ -278,7 +278,7 @@ from ..serializers import PostSerializer
 
 
 class GetPostsView(APIView):
-	permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
             posts = Post.objects.all().order_by('-created_at')
@@ -322,15 +322,15 @@ class CreatePostView(APIView):
 
 
 class PostsRouterView(APIView):
-	"""Routes GET and POST requests to separate views"""
-	permission_classes = [IsAuthenticated]
-	
-	def get(self, request):
-		"""List all posts"""
-		get_view = GetPostsView()
-		return get_view.get(request)
-	
-	def post(self, request):
-		"""Create a new post"""
-		create_view = CreatePostView()
-		return create_view.post(request)
+    """Routes GET and POST requests to separate views"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """List all posts"""
+        get_view = GetPostsView()
+        return get_view.get(request)
+
+    def post(self, request):
+        """Create a new post"""
+        create_view = CreatePostView()
+        return create_view.post(request)

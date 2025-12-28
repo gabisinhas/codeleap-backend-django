@@ -23,10 +23,13 @@ class AuthTests(APITestCase):
 
     def test_login(self):
         User.objects.create_user(**self.user_data)
+        # Use 'email' for login, since ACCOUNT_AUTHENTICATION_METHOD = 'email'
         response = self.client.post(self.login_url, {
-            'username': self.user_data['username'],
+            'email': self.user_data['email'],
             'password': self.user_data['password']
         })
+        if response.status_code != status.HTTP_200_OK:
+            print('Login response:', response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
 
@@ -35,7 +38,10 @@ class PostTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='user1', email='user1@email.com', password='pass1234')
         self.client = APIClient()
-        login = self.client.post(reverse('login'), {'username': 'user1', 'password': 'pass1234'})
+        # Use 'email' for login, since ACCOUNT_AUTHENTICATION_METHOD = 'email'
+        login = self.client.post(reverse('login'), {'email': 'user1@email.com', 'password': 'pass1234'})
+        if 'access' not in login.data:
+            print('Login response:', login.data)
         self.token = login.data['access']
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
 
