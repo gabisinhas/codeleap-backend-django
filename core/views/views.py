@@ -19,6 +19,14 @@ import logging
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+# Health check endpoint
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
+
+@require_GET
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 @method_decorator(csrf_exempt, name='dispatch')
 class GoogleLoginJWT(APIView):
     permission_classes = [permissions.AllowAny]
