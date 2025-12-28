@@ -186,11 +186,9 @@ MIDDLEWARE = [
 
 
 
+# CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -204,15 +202,23 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-CSRF_COOKIE_HTTPONLY = False  
-CSRF_COOKIE_SAMESITE = 'Lax'  
-CSRF_COOKIE_SECURE = False    
+# CSRF Configuration
+CSRF_TRUSTED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = not DEBUG  # True em produção, False em desenvolvimento    
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# Email Configuration
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 
 ROOT_URLCONF = 'codeleap_backend_django.urls'
 
@@ -236,9 +242,13 @@ WSGI_APPLICATION = 'codeleap_backend_django.wsgi.application'
 
 
 
-import dj_database_url
+# Database Configuration
+# Using SQLite for both development and production
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_URL', f'sqlite:///{BASE_DIR}/db.sqlite3'))
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 

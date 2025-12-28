@@ -7,6 +7,4 @@ services:
     envVars:
       - key: SECRET_KEY
         sync: false
-      - key: DATABASE_URL
-        sync: false
     plan: free
