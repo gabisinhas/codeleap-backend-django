@@ -1,13 +1,17 @@
-
 from django.urls import path
-from .csrf import get_csrf_token
-from .views import GetPostsView, CreatePostView, PatchPostView, DeletePostView, GoogleLoginJWT
+from .utils.csrf import get_csrf_token
+from .views.views import (
+    PostsRouterView, PatchPostView, DeletePostView,
+    GoogleLoginJWT, RegisterView, LoginView, CreatePostView
+)
 
 urlpatterns = [
     path('csrf/', get_csrf_token, name='get_csrf_token'),
-    path('posts/', GetPostsView.as_view(), name='listposts'),
-    path('posts/', CreatePostView.as_view(), name='createpost'),
-    path('posts/<int:post_id>/', PatchPostView.as_view(), name='editpost'),
-    path('posts/<int:post_id>/', DeletePostView.as_view(), name='deletepost'),
+    path('auth/register/', RegisterView.as_view(), name='register'),
+    path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/google/', GoogleLoginJWT.as_view(), name='google_login'),
+    path('listposts/', PostsRouterView.as_view(), name='listposts'),
+    path('createpost/', CreatePostView.as_view(), name='createpost'),
+    path('editpost/<int:post_id>/', PatchPostView.as_view(), name='editpost'),
+    path('deletepost/<int:post_id>/', DeletePostView.as_view(), name='deletepost'),
 ]

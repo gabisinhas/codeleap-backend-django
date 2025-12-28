@@ -5,12 +5,13 @@ from rest_framework import status, permissions
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from .models import Post
-from .serializers import PostSerializer
+from ..models.post import Post
+# As views podem ser movidas para core/views/ para melhor organização MVC.
+from ..serializers import PostSerializer
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 import os
 import logging
@@ -38,7 +39,7 @@ class GoogleLoginJWT(APIView):
             
             logger.info(f"Token recebido (primeiros 50 chars): {token[:50]}...")
             
-            # Verificar o token com a Google
+
             client_id = os.getenv('GOOGLE_CLIENT_ID')
             logger.info(f"Google Client ID: {client_id}")
             
@@ -50,32 +51,32 @@ class GoogleLoginJWT(APIView):
             
             try:
                 logger.info("Verificando token com Google...")
-                # Adiciona clock_skew_in_seconds para tolerar diferença de relógio
+
                 idinfo = id_token.verify_oauth2_token(
                     token, 
                     requests.Request(), 
                     client_id,
-                    clock_skew_in_seconds=300  # Tolera até 5 minutos de diferença
+                    clock_skew_in_seconds=300
                 )
                 
                 logger.info(f"Token verificado com sucesso! Email: {idinfo.get('email')}")
                 logger.info(f"Issuer: {idinfo.get('iss')}")
                 
-                # Verificar se o token é válido
+
                 if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
                     logger.error(f"Issuer inválido: {idinfo['iss']}")
                     return Response({
                         'error': 'Token inválido'
                     }, status=status.HTTP_401_UNAUTHORIZED)
                 
-                # Extrair informações do usuário
+
                 email = idinfo['email']
                 first_name = idinfo.get('given_name', '')
                 last_name = idinfo.get('family_name', '')
                 
                 logger.info(f"Buscando/criando usuário para email: {email}")
                 
-                # Buscar ou criar usuário
+
                 user, created = User.objects.get_or_create(
                     email=email,
                     defaults={
@@ -87,7 +88,7 @@ class GoogleLoginJWT(APIView):
                 
                 logger.info(f"Usuário {'criado' if created else 'encontrado'}: {user.username}")
                 
-                # Gerar tokens JWT
+
                 refresh = RefreshToken.for_user(user)
                 
                 logger.info("Tokens JWT gerados com sucesso!")
@@ -117,6 +118,91 @@ class GoogleLoginJWT(APIView):
                 'error': 'Erro interno durante a autenticação',
                 'detail': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class RegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        username = request.data.get('username')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        if not username or not email or not password:
+            return Response({
+                'error': 'Username, email e password são obrigatórios'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if User.objects.filter(username=username).exists():
+            return Response({
+                'error': 'Username já existe'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if User.objects.filter(email=email).exists():
+            return Response({
+                'error': 'Email já está cadastrado'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            
+
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({
+                'error': 'Erro ao criar usuário',
+                'detail': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        if not username or not password:
+            return Response({
+                'error': 'Username e password são obrigatórios'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = authenticate(username=username, password=password)
+        
+        if user is None:
+            return Response({
+                'error': 'Credenciais inválidas'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+            }
+        }, status=status.HTTP_200_OK)
 
 
 class DeletePostView(APIView):
@@ -152,11 +238,27 @@ class PatchPostView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class PostDetailRouterView(APIView):
+	"""Routes PATCH and DELETE requests to separate views"""
+	permission_classes = [permissions.IsAuthenticated]
+	
+	def patch(self, request, post_id):
+		"""Update a post"""
+		patch_view = PatchPostView()
+		return patch_view.patch(request, post_id)
+	
+	def delete(self, request, post_id):
+		"""Delete a post"""
+		delete_view = DeletePostView()
+		return delete_view.delete(request, post_id)
+
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Post
-from .serializers import PostSerializer
+from core.models.post import Post
+from ..serializers import PostSerializer
 
 
 class GetPostsView(APIView):
@@ -193,3 +295,18 @@ class CreatePostView(APIView):
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PostsRouterView(APIView):
+	"""Routes GET and POST requests to separate views"""
+	permission_classes = [IsAuthenticated]
+	
+	def get(self, request):
+		"""List all posts"""
+		get_view = GetPostsView()
+		return get_view.get(request)
+	
+	def post(self, request):
+		"""Create a new post"""
+		create_view = CreatePostView()
+		return create_view.post(request)
