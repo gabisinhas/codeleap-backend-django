@@ -1,2 +1,32 @@
-...existing code...
-requests>=2.28
+# Django Framework
+Django>=4.2,<5.0
+
+# Django REST Framework
+djangorestframework>=3.14.0
+
+# Authentication and Authorization
+django-allauth>=0.57.0
+dj-rest-auth[with_social]>=5.0.0
+djangorestframework-simplejwt>=5.3.0
+
+# CORS handling
+django-cors-headers>=4.3.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Database
+dj-database-url>=2.1.0
+psycopg2-binary>=2.9.7
+
+# Static files handling for production
+whitenoise>=6.6.0
+
+# Web server for production
+gunicorn>=21.2.0
+
+# API documentation
+drf-yasg>=1.21.0
+
+# HTTP requests (for external APIs)
+requests>=2.28.0
