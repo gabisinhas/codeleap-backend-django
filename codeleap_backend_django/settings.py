@@ -108,11 +108,9 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 
-
 REST_USE_JWT = True
 JWT_AUTH_COOKIE = 'auth-token'
 JWT_AUTH_REFRESH_COOKIE = 'refresh-token'
-
 
 ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
@@ -184,8 +182,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
-
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = False
 def _clean_origin(origin):
@@ -245,9 +241,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'codeleap_backend_django.wsgi.application'
 
-
-
-
 # Database Configuration
 # Using SQLite for both development and production
 DATABASES = {
@@ -256,10 +249,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
-
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -276,10 +265,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-
-
-
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -287,10 +272,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
-
-
-
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

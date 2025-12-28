@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from ..models.post import Post
-# As views podem ser movidas para core/views/ para melhor organização MVC.
+
 from ..serializers import PostSerializer
 
 from google.oauth2 import id_token
