@@ -216,35 +216,43 @@ class LoginView(APIView):
 class DeletePostView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def delete(self, request, post_id):
-        post = get_object_or_404(Post, id=post_id)
-        if post.username != request.user.username:
-            return Response({'detail': 'Você não tem permissão para deletar este post.'}, status=status.HTTP_403_FORBIDDEN)
-        post.delete()
-        return Response({'detail': 'Post deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        try:
+            post = get_object_or_404(Post, id=post_id)
+            if post.username != request.user.username:
+                return Response({'detail': 'Você não tem permissão para deletar este post.'}, status=status.HTTP_403_FORBIDDEN)
+            post.delete()
+            return Response({'detail': 'Post deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            logger.error(f"Erro ao deletar post: {str(e)}", exc_info=True)
+            return Response({'error': 'Erro interno ao deletar post', 'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class PatchPostView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def patch(self, request, post_id):
-        post = get_object_or_404(Post, id=post_id)
-        if post.username != request.user.username:
-            return Response({'detail': 'Você não tem permissão para editar este post.'}, status=status.HTTP_403_FORBIDDEN)
-        data = {}
-        if 'title' in request.data:
-            data['title'] = request.data['title']
-        if 'content' in request.data:
-            data['content'] = request.data['content']
-        serializer = PostSerializer(post, data=data, partial=True)
-        if serializer.is_valid():
-            post = serializer.save()
-            response_data = {
-                'id': post.id,
-                'username': post.username,
-                'created_datetime': post.created_at,
-                'title': post.title,
-                'content': post.content
-            }
-            return Response(response_data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            post = get_object_or_404(Post, id=post_id)
+            if post.username != request.user.username:
+                return Response({'detail': 'Você não tem permissão para editar este post.'}, status=status.HTTP_403_FORBIDDEN)
+            data = {}
+            if 'title' in request.data:
+                data['title'] = request.data['title']
+            if 'content' in request.data:
+                data['content'] = request.data['content']
+            serializer = PostSerializer(post, data=data, partial=True)
+            if serializer.is_valid():
+                post = serializer.save()
+                response_data = {
+                    'id': post.id,
+                    'username': post.username,
+                    'created_datetime': post.created_at,
+                    'title': post.title,
+                    'content': post.content
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Erro ao editar post: {str(e)}", exc_info=True)
+            return Response({'error': 'Erro interno ao editar post', 'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PostDetailRouterView(APIView):
@@ -271,38 +279,46 @@ from ..serializers import PostSerializer
 
 class GetPostsView(APIView):
 	permission_classes = [IsAuthenticated]
-	def get(self, request):
-		posts = Post.objects.all().order_by('-created_at')
-		data = [
-			{
-				'id': post.id,
-				'username': post.username,
-				'created_datetime': post.created_at,
-				'title': post.title,
-				'content': post.content
-			}
-			for post in posts
-		]
-		return Response(data)
+    def get(self, request):
+        try:
+            posts = Post.objects.all().order_by('-created_at')
+            data = [
+                {
+                    'id': post.id,
+                    'username': post.username,
+                    'created_datetime': post.created_at,
+                    'title': post.title,
+                    'content': post.content
+                }
+                for post in posts
+            ]
+            return Response(data)
+        except Exception as e:
+            logger.error(f"Erro ao listar posts: {str(e)}", exc_info=True)
+            return Response({'error': 'Erro interno ao listar posts', 'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CreatePostView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def post(self, request):
-        data = request.data.copy()
-        data['username'] = request.user.username
-        serializer = PostSerializer(data=data)
-        if serializer.is_valid():
-            post = serializer.save()
-            response_data = {
-                'id': post.id,
-                'username': post.username,
-                'created_datetime': post.created_at,
-                'title': post.title,
-                'content': post.content
-            }
-            return Response(response_data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            data = request.data.copy()
+            data['username'] = request.user.username
+            serializer = PostSerializer(data=data)
+            if serializer.is_valid():
+                post = serializer.save()
+                response_data = {
+                    'id': post.id,
+                    'username': post.username,
+                    'created_datetime': post.created_at,
+                    'title': post.title,
+                    'content': post.content
+                }
+                return Response(response_data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Erro ao criar post: {str(e)}", exc_info=True)
+            return Response({'error': 'Erro interno ao criar post', 'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PostsRouterView(APIView):
